@@ -1,6 +1,6 @@
 import { type ListSignal, useSignal, type ValueSignal } from "@vaadin/hilla-react-signals";
 import { ViewConfig } from "@vaadin/hilla-file-router/types.js";
-import { Button, HorizontalLayout, Icon, Scroller, TextArea, VerticalLayout } from "@vaadin/react-components";
+import { Button, HorizontalLayout, Icon, Notification, Scroller, TextArea, VerticalLayout } from "@vaadin/react-components";
 
 import type Message from "Frontend/generated/com/example/application/solution/services/ChatServiceSol/Message.js";
 
@@ -92,9 +92,11 @@ export default function ChatView() {
                   onValueChanged={(e => newMessage.value = e.detail.value)}
                   style={{height: '66px'}}/>
         <Button onClick={() => {
-          chatSignal.insertLast({text: newMessage.value, author: username});
-          newMessage.value = '';
-        }} disabled={newMessage.value === ''}>Send</Button>
+                          chatSignal.insertLast({text: newMessage.value, author: username})
+                            .result.then(() => {}, (reason) => Notification.show(reason));
+                          newMessage.value = '';
+                        }}
+                disabled={newMessage.value === ''}>Send</Button>
       </HorizontalLayout>
     </VerticalLayout>
   );
