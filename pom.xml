@@ -56,6 +56,11 @@
     <dependencies>
         <dependency>
             <groupId>com.vaadin</groupId>
+            <artifactId>hilla-endpoint</artifactId>
+            <version>24.6.0.alpha5</version>
+        </dependency>
+        <dependency>
+            <groupId>com.vaadin</groupId>
             <artifactId>vaadin</artifactId>
         </dependency>
         <dependency>
