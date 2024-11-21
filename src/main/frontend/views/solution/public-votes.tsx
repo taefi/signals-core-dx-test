@@ -1,7 +1,7 @@
 import { ViewConfig } from '@vaadin/hilla-file-router/types.js';
-import {Button, RadioButton, RadioGroup, VerticalLayout} from "@vaadin/react-components";
+import { Button, RadioButton, RadioGroup, VerticalLayout } from "@vaadin/react-components";
 import { VoteServiceSol } from "Frontend/generated/endpoints.js";
-import { signal } from "@vaadin/hilla-react-signals";
+import { effect, signal } from "@vaadin/hilla-react-signals";
 import { useEffect } from "react";
 
 export const config: ViewConfig = {
@@ -26,7 +26,7 @@ export default function PublicVotes() {
       return;
     }
     const runWithDelay = async () => {
-      for (let i = 0; i < 1000 && votingInProgress.value; i++) {
+      for (let i = 0; i < 250 && votingInProgress.value; i++) {
         voteUp();
         numberOfSentRequests.value++;
         await sleep(1);
@@ -37,11 +37,6 @@ export default function PublicVotes() {
 
   return (
     <VerticalLayout theme='padding'>
-      <p>
-        In this view, when the "Start Voting" button is clicked, the vote count will increase by one every millisecond.
-        When you manage to share the state of the voting process between multiple users, all clients will send a lot of
-        requests to the server at the same time to simulate concurrent voting by thousands of users:
-      </p>
       <RadioGroup label="Is voting in progress:" theme="horizontal">
         <RadioButton label="No"
                      checked={!votingInProgress.value}
@@ -72,3 +67,9 @@ export default function PublicVotes() {
 function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
+
+effect(() => {
+  if (voteCount.value === 0) {
+    numberOfSentRequests.value = 0;
+  }
+});

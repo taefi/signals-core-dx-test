@@ -17,6 +17,50 @@ export const config: ViewConfig = {
 
 const todoItems = signal<Array<Signal<{text: string, done: boolean}>>>([]);
 
+function removeItem(todoItem: Signal<{text: string, done: boolean}>) {
+  todoItems.value = todoItems.value.filter(item => item !== todoItem);
+}
+
+function addItem(item: {text: string, done: boolean}) {
+  todoItems.value = [...todoItems.value, signal(item)];
+}
+
+export default function TodoListView(){
+  const newTodoValue = useSignal<string>('');
+
+  return (
+    <>
+      <VerticalLayout theme="padding">
+        <p>
+          This view is already implemented with the functionalities of adding, removing, editing, and marking tasks as done.
+          Your task here is to share the state of the to-do list with other users in real-time:
+        </p>
+        <HorizontalLayout theme="spacing padding" style={{alignItems: 'BASELINE'}}>
+          <h3>To-do list:</h3>
+        </HorizontalLayout>
+        {todoItems.value.length === 0
+          ? <span style={{padding: '10px'}}>No tasks yet...</span>
+          : todoItems.value.map((item, index) =>
+            <TodoComponent todoItem={item}
+                           key={index}
+                           onRemove={() => removeItem(item)}/>)
+        }
+        <HorizontalLayout theme='padding spacing'>
+          <TextField placeholder="What's on your mind?"
+                     value={newTodoValue.value}
+                     onValueChanged={(e) => newTodoValue.value = e.detail.value} />
+          <Button onClick={() => handleAddTask(newTodoValue)}>Add task</Button>
+        </HorizontalLayout>
+      </VerticalLayout>
+    </>
+  );
+}
+
+function handleAddTask(newTodoValue: Signal<string>) {
+  addItem({ text: newTodoValue.value, done: false });
+  newTodoValue.value = '';
+}
+
 function TodoComponent({todoItem, onRemove}: {
   todoItem: Signal<{text: string, done: boolean}>,
   onRemove: (signal: Signal<{text: string, done: boolean}>) => void,
@@ -72,43 +116,5 @@ function TodoComponent({todoItem, onRemove}: {
         <Icon icon="vaadin:close-small" />
       </Button>
     </HorizontalLayout>
-  );
-}
-
-function removeItem(todoItem: Signal<{text: string, done: boolean}>) {
-  todoItems.value = todoItems.value.filter(item => item !== todoItem);
-}
-
-function addItem(item: Signal<{text: string, done: boolean}>) {
-  todoItems.value = [...todoItems.value, item];
-}
-
-export default function TodoListView(){
-  const newTodoValue = useSignal<string>('');
-
-  return (
-    <>
-      <VerticalLayout theme="padding">
-        <HorizontalLayout theme="spacing padding" style={{alignItems: 'BASELINE'}}>
-          <h3>To-do list:</h3>
-        </HorizontalLayout>
-        {todoItems.value.length === 0
-          ? <span style={{padding: '10px'}}>No tasks yet...</span>
-          : todoItems.value.map((item, index) =>
-            <TodoComponent todoItem={item}
-                           key={index}
-                           onRemove={() => removeItem(item)}/>)
-        }
-        <HorizontalLayout theme='padding spacing'>
-          <TextField placeholder="What's on your mind?"
-                     value={newTodoValue.value}
-                     onValueChanged={(e) => newTodoValue.value = e.detail.value}/>
-          <Button onClick={() => {
-            addItem(signal({ text: newTodoValue.value, done: false}));
-            newTodoValue.value = '';
-          }}>Add task</Button>
-        </HorizontalLayout>
-      </VerticalLayout>
-    </>
   );
 }

@@ -14,6 +14,44 @@ export const config: ViewConfig = {
 
 const chatSignal: ListSignal<Message> = ChatServiceSol.chatSignal();
 
+export default function ChatView() {
+  const { state, logout } = useAuth();
+  const username = state.user !== undefined ? state.user.name : 'Anonymous';
+  const newMessage = useSignal<string>('');
+
+  return (
+    <VerticalLayout theme='padding'>
+      <h3>Welcome {username}!</h3>
+      <Scroller style={{height: '65vh',
+        width: '100%',
+        borderBottom: '1px solid var(--lumo-contrast-20pct)',
+        borderTop: '1px solid var(--lumo-contrast-20pct)',
+      }}
+                scrollDirection="vertical">
+        {chatSignal.value.length === 0
+          ? <>No messages yet...</>
+          : chatSignal.value.map((message, index) =>
+            <MessageEditor message={message}
+                           onRemove={() => chatSignal.remove(message)}
+                           isMyMessage={message.value.author.toLowerCase() === username.toLowerCase()}
+                           key={index}/>)
+        }
+      </Scroller>
+      <HorizontalLayout theme='spacing' style={{alignItems: 'BASELINE'}}>
+        <TextArea value={newMessage.value} placeholder="Type in your message and press send..."
+                  onValueChanged={(e => newMessage.value = e.detail.value)}
+                  style={{height: '66px'}}/>
+        <Button onClick={() => {
+          chatSignal.insertLast({text: newMessage.value, author: username})
+          .result.then(() => {}, (reason: string) => Notification.show(reason));
+          newMessage.value = '';
+        }}
+                disabled={newMessage.value === ''}>Send</Button>
+      </HorizontalLayout>
+    </VerticalLayout>
+  );
+}
+
 function MessageEditor({message, onRemove, isMyMessage}: {
   message: ValueSignal<Message>,
   onRemove: (signal: ValueSignal<Message>) => void,
@@ -59,45 +97,5 @@ function MessageEditor({message, onRemove, isMyMessage}: {
         <Icon icon="vaadin:close-small" />
       </Button>
     </HorizontalLayout>
-  );
-}
-
-export default function ChatView() {
-  const { state, logout } = useAuth();
-  const username = state.user !== undefined ? state.user.name : 'Anonymous';
-  const newMessage = useSignal<string>('');
-
-  return (
-    <VerticalLayout theme='padding'>
-      <h3>Welcome {username}!</h3>
-      <span>The word "bad" is not allowed in this chat, and the message will not be accepted!</span>
-      <span>But, you can be creative by saying things like "b-a-d" or "B A D"</span>
-      <Scroller style={{height: '65vh',
-                  width: '100%',
-                  borderBottom: '1px solid var(--lumo-contrast-20pct)',
-                  borderTop: '1px solid var(--lumo-contrast-20pct)',
-                }}
-                scrollDirection="vertical">
-        {chatSignal.value.length === 0
-          ? <>No messages yet...</>
-          : chatSignal.value.map((message, index) =>
-            <MessageEditor message={message}
-                           onRemove={() => chatSignal.remove(message)}
-                           isMyMessage={message.value.author.toLowerCase() === username.toLowerCase()}
-                           key={index}/>)
-        }
-      </Scroller>
-      <HorizontalLayout theme='spacing' style={{alignItems: 'BASELINE'}}>
-        <TextArea value={newMessage.value} placeholder="Type in your message and press send..."
-                  onValueChanged={(e => newMessage.value = e.detail.value)}
-                  style={{height: '66px'}}/>
-        <Button onClick={() => {
-                          chatSignal.insertLast({text: newMessage.value, author: username})
-                            .result.then(() => {}, (reason) => Notification.show(reason));
-                          newMessage.value = '';
-                        }}
-                disabled={newMessage.value === ''}>Send</Button>
-      </HorizontalLayout>
-    </VerticalLayout>
   );
 }

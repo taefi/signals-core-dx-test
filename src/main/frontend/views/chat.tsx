@@ -1,21 +1,67 @@
-import { Signal, signal, useSignal } from "@vaadin/hilla-react-signals";
+import { useSignal, type ValueSignal } from "@vaadin/hilla-react-signals";
 import { ViewConfig } from "@vaadin/hilla-file-router/types.js";
-import { Button, HorizontalLayout, Icon, Scroller, TextArea, VerticalLayout } from "@vaadin/react-components";
+import {
+  Button,
+  HorizontalLayout,
+  Icon,
+  Notification,
+  Scroller,
+  TextArea,
+  VerticalLayout
+} from "@vaadin/react-components";
 
 import type Message from "Frontend/generated/com/example/application/solution/services/ChatServiceSol/Message.js";
 
 import { useAuth } from "Frontend/util/auth.js";
+import { ChatService } from "Frontend/generated/endpoints.js";
 
 export const config: ViewConfig = {
   menu: { order: 40, title: 'Chat', exclude: false },
   title: 'Chat',
 };
 
-const chatSignal =  signal<Array<Signal<{text: string, author: string}>>>([]);
+const chatSignal = ChatService.chatSignal();
+
+export default function ChatView() {
+  const { state, logout } = useAuth();
+  const username = state.user !== undefined ? state.user.name : 'Anonymous';
+  const newMessage = useSignal<string>('');
+
+  return (
+    <VerticalLayout theme='padding'>
+      <h3>Welcome {username}!</h3>
+      <Scroller style={{height: '65vh',
+        width: '100%',
+        borderBottom: '1px solid var(--lumo-contrast-20pct)',
+        borderTop: '1px solid var(--lumo-contrast-20pct)',
+      }}
+                scrollDirection="vertical">
+        {chatSignal.value.length === 0
+          ? <>No messages yet...</>
+          : chatSignal.value.map((message, index) =>
+            <MessageEditor message={message}
+                           onRemove={() => chatSignal.remove(message)}
+                           isMyMessage={message.value.author.toLowerCase() === username.toLowerCase()}
+                           key={index}/>)
+        }
+      </Scroller>
+      <HorizontalLayout theme='spacing' style={{alignItems: 'BASELINE'}}>
+        <TextArea value={newMessage.value} placeholder="Type in your message and press send..."
+                  onValueChanged={(e => newMessage.value = e.detail.value)}
+                  style={{height: '66px'}}/>
+        <Button onClick={() => {
+          chatSignal.insertLast({text: newMessage.value, author: username});
+          newMessage.value = '';
+        }}
+                disabled={newMessage.value === ''}>Send</Button>
+      </HorizontalLayout>
+    </VerticalLayout>
+  );
+}
 
 function MessageEditor({message, onRemove, isMyMessage}: {
-  message: Signal<Message>,
-  onRemove: (signal: Signal<Message>) => void,
+  message: ValueSignal<Message>,
+  onRemove: (signal: ValueSignal<Message>) => void,
   isMyMessage: boolean
 }) {
   const editing = useSignal(false);
@@ -42,10 +88,10 @@ function MessageEditor({message, onRemove, isMyMessage}: {
       </Button>
       <Button hidden={!editing.value} theme="icon"
               onClick={() => {
-                message.value = {
+                message.replace(message.value, {
                   text: messageText.value,
                   author: message.value.author
-                };
+                });
                 editing.value = false;
               }}>
         <Icon icon="vaadin:check" />
@@ -58,51 +104,5 @@ function MessageEditor({message, onRemove, isMyMessage}: {
         <Icon icon="vaadin:close-small" />
       </Button>
     </HorizontalLayout>
-  );
-}
-
-function addItem(message: Signal<{text: string, author: string}>) {
-  chatSignal.value = [...chatSignal.value, message];
-}
-
-function removeItem(message: Signal<{text: string, author: string}>) {
-  chatSignal.value = chatSignal.value.filter(item => item !== message);
-}
-
-export default function ChatView() {
-  const { state, logout } = useAuth();
-  const username = state.user !== undefined ? state.user.name : 'Anonymous';
-  const newMessage = useSignal<string>('');
-
-  return (
-    <VerticalLayout theme='padding'>
-      <h3>Welcome {username}!</h3>
-      <span>The word "bad" is not allowed in this chat, and the message will not be accepted!</span>
-      <span>But, you can be creative by saying things like "b-a-d" or "B A D"</span>
-      <Scroller style={{height: '65vh',
-                  width: '100%',
-                  borderBottom: '1px solid var(--lumo-contrast-20pct)',
-                  borderTop: '1px solid var(--lumo-contrast-20pct)',
-                }}
-                scrollDirection="vertical">
-        {chatSignal.value.length === 0
-          ? <>No messages yet...</>
-          : chatSignal.value.map((message, index) =>
-            <MessageEditor message={message}
-                           onRemove={() => removeItem(message)}
-                           isMyMessage={message.value.author.toLowerCase() === username.toLowerCase()}
-                           key={index}/>)
-        }
-      </Scroller>
-      <HorizontalLayout theme='spacing' style={{alignItems: 'BASELINE'}}>
-        <TextArea value={newMessage.value} placeholder="Type in your message and press send..."
-                  onValueChanged={(e => newMessage.value = e.detail.value)}
-                  style={{height: '66px'}}/>
-        <Button onClick={() => {
-          addItem(signal({text: newMessage.value, author: username}));
-          newMessage.value = '';
-        }} disabled={newMessage.value === ''}>Send</Button>
-      </HorizontalLayout>
-    </VerticalLayout>
   );
 }

@@ -18,6 +18,36 @@ export const config: ViewConfig = {
 
 const todoItems = TodoServiceSol.todoItems();
 
+export default function TodoListView(){
+  const newTodoValue = useSignal<string>('');
+
+  return (
+    <>
+      <VerticalLayout theme="padding">
+        <HorizontalLayout theme="spacing padding" style={{alignItems: 'BASELINE'}}>
+          <h3>To-do list:</h3>
+        </HorizontalLayout>
+        {todoItems.value.length === 0
+          ? <span style={{padding: '10px'}}>No tasks yet...</span>
+          : todoItems.value.map((item, index) =>
+            <TodoComponent todoItem={item}
+                           key={index}
+                           onRemove={() => todoItems.remove(item)}/>)
+        }
+        <HorizontalLayout theme='padding spacing'>
+          <TextField placeholder="What's on your mind?"
+                     value={newTodoValue.value}
+                     onValueChanged={(e) => newTodoValue.value = e.detail.value}/>
+          <Button onClick={() => {
+            todoItems.insertLast({text: newTodoValue.value, done: false});
+            newTodoValue.value = '';
+          }}>Add task</Button>
+        </HorizontalLayout>
+      </VerticalLayout>
+    </>
+  );
+}
+
 function TodoComponent({todoItem, onRemove}: {
   todoItem: ValueSignal<{text: string, done: boolean}>,
   onRemove: (signal: ValueSignal<{text: string, done: boolean}>) => void,
@@ -73,35 +103,5 @@ function TodoComponent({todoItem, onRemove}: {
         <Icon icon="vaadin:close-small" />
       </Button>
     </HorizontalLayout>
-  );
-}
-
-export default function TodoListView(){
-  const newTodoValue = useSignal<string>('');
-
-  return (
-    <>
-      <VerticalLayout theme="padding">
-        <HorizontalLayout theme="spacing padding" style={{alignItems: 'BASELINE'}}>
-          <h3>To-do list:</h3>
-        </HorizontalLayout>
-        {todoItems.value.length === 0
-          ? <span style={{padding: '10px'}}>No tasks yet...</span>
-          : todoItems.value.map((item, index) =>
-            <TodoComponent todoItem={item}
-                           key={index}
-                           onRemove={() => todoItems.remove(item)}/>)
-        }
-        <HorizontalLayout theme='padding spacing'>
-          <TextField placeholder="What's on your mind?"
-                     value={newTodoValue.value}
-                     onValueChanged={(e) => newTodoValue.value = e.detail.value}/>
-          <Button onClick={() => {
-            todoItems.insertLast({text: newTodoValue.value, done: false});
-            newTodoValue.value = '';
-          }}>Add task</Button>
-        </HorizontalLayout>
-      </VerticalLayout>
-    </>
   );
 }

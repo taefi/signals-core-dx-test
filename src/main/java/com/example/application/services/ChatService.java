@@ -3,6 +3,7 @@ package com.example.application.services;
 import com.example.application.security.AuthenticatedUser;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
 import com.vaadin.hilla.BrowserCallable;
+import com.vaadin.hilla.signals.ListSignal;
 
 @AnonymousAllowed
 @BrowserCallable
@@ -16,8 +17,11 @@ public class ChatService {
         this.authenticatedUser = authenticatedUser;
     }
 
+    private final ListSignal<Message> chatSignal = new ListSignal<>(Message.class);
 
-
+    public ListSignal<Message> chatSignal() {
+        return chatSignal;
+    }
 
     // Followings are some helpers in case you need them, otherwise feel free to ignore or remove them:
 
